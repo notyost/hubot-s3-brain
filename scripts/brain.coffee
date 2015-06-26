@@ -69,9 +69,8 @@ module.exports = (robot) ->
   # default to 30 minutes (in seconds)
   save_interval     = process.env.HUBOT_S3_BRAIN_SAVE_INTERVAL || 30 * 60
 
-  if !key && !secret && !bucket
-    throw new Error('S3 brain requires HUBOT_S3_BRAIN_ACCESS_KEY_ID, ' +
-      'HUBOT_S3_BRAIN_SECRET_ACCESS_KEY and HUBOT_S3_BRAIN_BUCKET configured')
+  if !bucket
+    throw new Error('S3 brain requires HUBOT_S3_BRAIN_BUCKET configured')
 
   save_interval = parseInt(save_interval)
   if isNaN(save_interval)
