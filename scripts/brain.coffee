@@ -68,9 +68,13 @@ module.exports = (robot) ->
   file_path         = process.env.HUBOT_S3_BRAIN_FILE_PATH || "brain-dump.json"
   # default to 30 minutes (in seconds)
   save_interval     = process.env.HUBOT_S3_BRAIN_SAVE_INTERVAL || 30 * 60
+  not_required      = process.env.HUBOT_S3_BRAIN_NOT_REQUIRED
 
   if !bucket
-    throw new Error('S3 brain requires HUBOT_S3_BRAIN_BUCKET configured')
+    if not_required
+      robot.logger.warning "S3 brain requires HUBOT_S3_BRAIN_BUCKET configured, will not persist"
+    else
+      throw new Error('S3 brain requires HUBOT_S3_BRAIN_BUCKET configured')
 
   save_interval = parseInt(save_interval)
   if isNaN(save_interval)
@@ -103,8 +107,11 @@ module.exports = (robot) ->
         robot.logger.info "No brain found at s3://#{bucket}/#{file_path}"
         robot.brain.mergeData {}
         loaded = true
+      else if not_required
+        robot.logger.info "Unable to contact S3, will not persist"
       else
-        throw new Error("Error contacting S3:\n#{util.inspect(e)}")
+        robot.logger.error "Error contacting S3:\n#{util.inspect(err)}"
+        process.exit(1)
 
     if data && data.Body
       robot.logger.debug "Found brain at s3://#{bucket}/#{file_path}"
