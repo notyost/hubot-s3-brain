@@ -98,25 +98,20 @@ module.exports = (robot) ->
     store_brain robot.brain.data
 
   s3.getObject {}, (err, data) ->
-    # unfortunately S3 gives us a 403 if we have access denied OR
-    # the file is simply missing, so no way of knowing if IAM policy is bad
-    save_handler = (e, r) ->
-      if e then throw new Error("Error contacting S3:\n#{util.inspect(e)}")
-
-    # try to store an empty placeholder to see if IAM settings are valid
-    if err then store_brain {}, save_handler
+    if err
+      if err.status_code == 404
+        robot.logger.info "No brain found at s3://#{bucket}/#{file_path}"
+        robot.brain.mergeData {}
+        loaded = true
+      else
+        throw new Error("Error contacting S3:\n#{util.inspect(e)}")
 
     if data && data.Body
       robot.logger.debug "Found brain at s3://#{bucket}/#{file_path}"
       robot.brain.mergeData JSON.parse(data.Body)
-    else
-      robot.logger.error util.inspect(err)
-      robot.brain.mergeData {}
+      loaded = true
 
-  robot.brain.on 'loaded', () ->
-    loaded = true
     robot.brain.resetSaveInterval(save_interval)
-    store_current_brain()
 
   robot.brain.on 'save', () ->
     store_current_brain()
