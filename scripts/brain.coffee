@@ -103,7 +103,7 @@ module.exports = (robot) ->
 
   s3.getObject {}, (err, data) ->
     if err
-      if err.status_code == 404
+      if err.statusCode == 404
         robot.logger.info "No brain found at s3://#{bucket}/#{file_path}"
         robot.brain.mergeData {}
         loaded = true
